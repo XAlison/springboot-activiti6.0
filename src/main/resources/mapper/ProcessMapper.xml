@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.activiti.oa.mapper.ProcessMapper">
+    <!--查询待办-->
+    <select id="getDoingTasks"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="com.activiti.oa.model.TaskViewModel">
+
+        SELECT
+        task.ID_ AS id,
+        task.PROC_INST_ID_ as processId,
+        task.NAME_ AS name,
+        task.CREATE_TIME_ AS createTime,
+        fd.name AS processName,
+        task.ASSIGNEE_ AS started,
+        inst.START_TIME_ AS startedTime,
+        flow_version.titleHtml,
+        node.formId AS formId,
+        flow_definition.icon,
+        flow_definition.listIcon AS listIcon
+        FROM ACT_RU_TASK AS task
+        LEFT JOIN ACT_HI_PROCINST AS inst ON task.PROC_INST_ID_ = inst.ID_
+        LEFT JOIN flow_version AS fv ON SUBSTRING_INDEX(task.PROC_DEF_ID_, ':', 1 ) = fv.id
+        LEFT JOIN flow_definition AS fd ON fd.id = fv.definitionId
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1 )
+        LEFT JOIN flow_node node ON flow_version.id = node.processId AND flow_version.startedNodeId = node.id
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        (task.ASSIGNEE_ = #{filters.currentUserId} OR
+        (task.ASSIGNEE_ = 'initiator' AND task.TASK_DEF_KEY_ IN (
+        SELECT node_id FROM flow_node_executor AS exe
+        WHERE (exe.executor_type = '全部') OR
+        (exe.executor_type = '用户' AND exe.executor_id = #{filters.currentUserId}) OR
+        (exe.executor_type = '发起人' AND #{filters.currentUserId} IN (SELECT START_USER_ID_ FROM ACT_HI_PROCINST WHERE
+        ACT_HI_PROCINST.PROC_INST_ID_ = task.PROC_INST_ID_ ))
+        )))
+        <if test="filters.processName != null">
+            AND fd.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.nodeName != null">
+            AND task.NAME_ LIKE '%${filters.nodeName}%'
+        </if>
+        ORDER BY task.PRIORITY_ DESC, task.CREATE_TIME_ DESC
+        LIMIT #{start}, #{size}
+    </select>
+    <select id="getDoingTasksCount"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="Long">
+        SELECT COUNT(*) FROM ACT_RU_TASK AS task
+        LEFT JOIN ACT_HI_PROCINST AS inst ON task.PROC_INST_ID_ = inst.ID_
+        LEFT JOIN ACT_RE_PROCDEF AS proc ON task.PROC_DEF_ID_ = proc.ID_
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1 )
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        (task.ASSIGNEE_ = #{filters.currentUserId} OR
+        (task.ASSIGNEE_ = 'initiator' AND task.TASK_DEF_KEY_ IN (
+        SELECT node_id FROM flow_node_executor AS exe
+        WHERE (exe.executor_type = '全部') OR
+        (exe.executor_type = '用户' AND exe.executor_id = #{filters.currentUserId}) OR
+        (exe.executor_type = '发起人' AND #{filters.currentUserId} IN (SELECT START_USER_ID_ FROM ACT_HI_PROCINST WHERE
+        ACT_HI_PROCINST.PROC_INST_ID_ = task.PROC_INST_ID_ ))
+        )))
+        <if test="filters.processName != null">
+            AND flow_definition.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.nodeName != null">
+            AND task.NAME_ LIKE '%${filters.nodeName}%'
+        </if>
+    </select>
+    <!--查询已办-->
+    <select id="getDoneTasks"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="com.activiti.oa.model.InstanceViewModel">
+        SELECT
+        inst.ID_ AS id,
+        inst.PROC_DEF_ID_ AS processId,
+        flow_definition.name AS name,
+        inst.START_USER_ID_ AS started,
+        inst.START_TIME_ AS startedTime,
+        inst.STATE AS instanceState,
+        inst.END_TIME_ AS endTime,
+        task.ID_ AS taskId,
+        task.NAME_ AS taskName,
+        task.ASSIGNEE_ AS taskAssignee,
+        flow_version.titleHtml,
+        node.formId AS formId,
+        flow_definition.icon,
+        flow_definition.listIcon AS listIcon
+        FROM ACT_HI_PROCINST AS inst
+        LEFT JOIN ACT_RU_TASK AS task ON inst.ID_ = task.PROC_INST_ID_
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1)
+        LEFT JOIN flow_node node ON flow_version.id = node.processId AND flow_version.startedNodeId = node.id
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
+        AND (task.ID_ = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} AND DELETE_REASON_ = 'completed')
+        <if test="filters.processName != null">
+            AND flow_definition.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.nodeName != null">
+            AND task.NAME_ LIKE '%${filters.nodeName}%'
+        </if>
+        ORDER BY inst.START_TIME_ DESC
+        LIMIT #{start}, #{size}
+    </select>
+    <select id="getDoneTasksCount"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="Long">
+        SELECT COUNT(*) FROM ACT_HI_PROCINST AS inst
+        LEFT JOIN ACT_RE_PROCDEF AS proc ON inst.PROC_DEF_ID_ = proc.ID_
+        LEFT JOIN ACT_RU_TASK AS task ON inst.ID_ = task.PROC_INST_ID_
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1)
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
+        AND (task.ID_  = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} AND DELETE_REASON_ = 'completed')
+        <if test="filters.processName != null">
+            AND flow_definition.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.nodeName != null">
+            AND task.NAME_ LIKE '%${filters.nodeName}%'
+        </if>
+    </select>
+    <!--查询实例-->
+    <select id="getInstances"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="com.activiti.oa.model.InstanceViewModel">
+        SELECT
+        inst.ID_ AS id,
+        inst.PROC_DEF_ID_ AS processId,
+        flow_definition.name AS name,
+        inst.START_USER_ID_ AS started,
+        inst.START_TIME_ AS startedTime,
+        inst.END_TIME_ AS endTime,
+        inst.STATE AS instanceState,
+        task.ID_ AS taskId,
+        task.NAME_ AS taskName,
+        task.ASSIGNEE_ AS taskAssignee,
+        flow_version.titleHtml,
+        node.formId AS formId,
+        flow_definition.icon,
+        flow_definition.listIcon AS listIcon
+        FROM ACT_HI_PROCINST AS inst
+        LEFT JOIN ACT_RE_PROCDEF AS proc ON inst.PROC_DEF_ID_ = proc.ID_
+        LEFT JOIN ACT_RU_TASK AS task ON inst.ID_ = task.PROC_INST_ID_
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1 )
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        LEFT JOIN flow_node node ON flow_version.id = node.processId AND flow_version.startedNodeId = node.id
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
+        AND (task.ID_ = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
+        <if test="filters.processName != null">
+            AND flow_definition.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.startedUserId != null">
+            AND inst.START_USER_ID_ = #{filters.startedUserId}
+        </if>
+        <if test="filters.startedUserName != null">
+            AND inst.START_USER_ID_ LIKE '%${filters.startedUserName}%'
+        </if>
+        <if test="filters.processState != null">
+            AND (inst.STATE = #{filters.processState} OR (#{filters.processState} = 1 AND inst.STATE IS NULL))
+        </if>
+        <if test="filters.startedAfter != null">
+            AND inst.START_TIME_ &gt;= #{filters.startedAfter}
+        </if>
+        <if test="filters.startedBefore != null">
+            AND inst.START_TIME_ &lt;= #{filters.startedBefore}
+        </if>
+        GROUP BY inst.ID_,
+        flow_definition.`name`,
+        flow_version.titleHtml,
+        node.formId,
+        task.ID_
+        ORDER BY inst.START_TIME_ DESC
+        LIMIT #{start}, #{size}
+    </select>
+    <select id="getInstancesCount"
+            parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
+            resultType="Long">
+        SELECT COUNT(*) FROM ACT_HI_PROCINST AS inst
+        LEFT JOIN ACT_RE_PROCDEF AS proc ON inst.PROC_DEF_ID_ = proc.ID_
+        LEFT JOIN ACT_RU_TASK AS task ON inst.ID_ = task.PROC_INST_ID_
+        LEFT JOIN flow_version ON flow_version.id = SUBSTRING_INDEX(inst.PROC_DEF_ID_, ':', 1 )
+        LEFT JOIN flow_definition ON flow_definition.id = flow_version.definitionId
+        WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
+        inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
+        AND (task.ID_  = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
+        <if test="filters.processName != null">
+            AND flow_definition.name LIKE '%${filters.processName}%'
+        </if>
+        <if test="filters.startedUserId != null">
+            AND inst.START_USER_ID_ = #{filters.startedUserId}
+        </if>
+        <if test="filters.startedUserName != null">
+            AND inst.START_USER_ID_ LIKE '%${filters.startedUserName}%'
+        </if>
+        <if test="filters.processState != null">
+            AND (inst.STATE = #{filters.processState} OR (#{filters.processState} = 1 AND inst.STATE IS NULL))
+        </if>
+        <if test="filters.startedAfter != null">
+            AND inst.START_TIME_ &gt;= #{filters.startedAfter}
+        </if>
+        <if test="filters.startedBefore != null">
+            AND inst.START_TIME_ &lt;= #{filters.startedBefore}
+        </if>
+    </select>
+
+    <!-- 流程实例任务状态-->
+    <update id="modifyProcessState" parameterType="Map">
+    UPDATE ACT_HI_PROCINST SET STATE = #{state}, END_TIME_ = now() WHERE PROC_INST_ID_ = #{InstanceId}
+    </update>
+
+    <!-- 查询所有流程 -->
+    <select id="getAllFlowList" resultType="com.activiti.oa.model.Definition" useCache="false">
+       SELECT
+        fd.id,
+        fd.`name`,
+        fc.`category` AS category,
+        fd.current_version AS currentVersion,
+        fd.icon AS icon,
+        fd.listIcon AS listIcon
+        FROM
+        flow_category fc
+        LEFT JOIN   flow_definition fd ON fc.id = fd.category
+        WHERE
+            isTest = '0'
+        ORDER BY
+            fc.id ASC,
+            fd.create_time DESC
+   </select>
+
+</mapper>

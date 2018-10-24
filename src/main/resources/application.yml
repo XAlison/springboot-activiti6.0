@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/activiti?characterEncoding=utf8&serverTimezone=GMT%2B8&allowMultiQueries=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    tomcat:
+      max-active: 1000
+      max-idle: 1000
+#activiti:
+    #database-schema-update: true
+    #check-process-definitions: false
+    #custom-mybatis-xmlmappers: classpath*:mapper/*.xml
+    #custom-mybatis-mappers: pers.zc.activiti.mapper
+  thymeleaf:
+    prefix: classpath:/views/
+    suffix: .html
+    mode: HTML5
+    encoding: UTF-8
+    cache: false
+  jpa:
+    show-sql: true
+server:
+  port: 8090
+  tomcat:
+    uri-encoding: utf-8
+logging:
+  level:
+     pers.zc.activiti.* : debug
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
