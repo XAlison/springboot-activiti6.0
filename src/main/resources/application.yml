@@ -20,6 +20,10 @@ spring:
     cache: false
   jpa:
     show-sql: true
+  devtools:
+    restart:
+      exclude: test/**
+      enabled: true
 server:
   port: 8090
   tomcat:

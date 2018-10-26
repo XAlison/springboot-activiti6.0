@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:activiti="http://activiti.org/bpmn"
+targetNamespace="http://activiti.org/bpmn20"
+xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+ http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"><process id="_166AE5F6-1810-4BE1-BA72-28853E5BAD26" name="2222">
+<startEvent id="start" activiti:initiator="applyUser" name="myStart" />
+<sequenceFlow id="_ec75dbe5-b5ed-423b-8815-799249818fd5" sourceRef="start" targetRef="_166AE5CB-F750-9FE5-15A2-442C04F395DE" />
+<userTask activiti:assignee="initiator" id="_166AE5CB-F750-9FE5-15A2-442C04F395DE" name="发起流程" />
+<userTask activiti:assignee="initiator" id="_166AE5CF-F850-453A-4B15-1766BB4C3C87" name="节点1" />
+<userTask activiti:assignee="initiator" id="_166AE5D3-3A60-E333-E9D7-77CFA6F31A14" name="节点2" />
+<endEvent id="endpoint" name="flowEnd" />
+<sequenceFlow id="_540d2c77-670b-4f7e-89df-f08b2ec9a832" sourceRef="_166AE5CB-F750-9FE5-15A2-442C04F395DE" targetRef="_53995ba9-87a0-4cde-9489-954387ce7840" />
+<exclusiveGateway id="_53995ba9-87a0-4cde-9489-954387ce7840" name="排他网关" default="_166AE5F6-1CA0-440A-B323-FBAAD34086B5" />
+<sequenceFlow id="_166AE5F6-1A70-4924-9173-6D4194ABA530" sourceRef="_53995ba9-87a0-4cde-9489-954387ce7840" targetRef="_166AE5CF-F850-453A-4B15-1766BB4C3C87" >
+<conditionExpression xsi:type="tFormalExpression"><![CDATA[${fix_166AE5DA_0D21_D0CF_4B6E_D3C4BA414E41 == "A" && action == "166AE5CB-F761-9C99-8711-B89B050A1C6A"}]]></conditionExpression>
+</sequenceFlow>
+
+<sequenceFlow id="_166AE5F6-1CA0-440A-B323-FBAAD34086B5" sourceRef="_53995ba9-87a0-4cde-9489-954387ce7840" targetRef="_166AE5D3-3A60-E333-E9D7-77CFA6F31A14" >
+</sequenceFlow>
+<sequenceFlow id="_166AE5F6-1D00-42DF-81A1-264B55B66A7B" sourceRef="_166AE5CF-F850-453A-4B15-1766BB4C3C87" targetRef="endpoint" />
+<sequenceFlow id="_166AE5F6-1D30-4BF8-9594-D3CCB03FF742" sourceRef="_166AE5D3-3A60-E333-E9D7-77CFA6F31A14" targetRef="endpoint" />
+<endEvent id="cancelled" name="flowancelled" />
+</process>
+</definitions>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xmlns:activiti="http://activiti.org/bpmn" targetNamespace="http://activiti.org/bpmn20" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"><process id="_166AEFF9-1E70-4AEB-9F5A-C16CAF3ED9A8" name="vvvv">
+<startEvent id="start" activiti:initiator="applyUser" name="myStart" />
+<sequenceFlow id="_dc409b85-d089-4a88-ac7b-7a8ad4bffa0c" sourceRef="start" targetRef="_165FAC16-7FD0-DCE2-F3C3-F85E014C30DA" />
+<userTask activiti:assignee="initiator" id="_165FAC16-7FD0-DCE2-F3C3-F85E014C30DA" name="发起流程" />
+<userTask activiti:assignee="initiator" id="_165FAC17-9FF0-AA80-DF78-12C88FA5ACB5" name="审核" />
+<userTask activiti:assignee="initiator" id="_165FAC18-0930-5635-A482-EFF6B30FC5B5" name="复审" />
+<userTask activiti:assignee="initiator" id="_166AEF93-EF40-F13B-A9C3-E480D38F88D0" name="节点1" />
+<endEvent id="endpoint" name="flowEnd" />
+<sequenceFlow id="_166AEFF9-1F80-4DFE-B4B7-31581297E181" sourceRef="_165FAC16-7FD0-DCE2-F3C3-F85E014C30DA" targetRef="_165FAC17-9FF0-AA80-DF78-12C88FA5ACB5" />
+<sequenceFlow id="_7de48df6-9174-4781-b15d-02d7a0745799" sourceRef="_165FAC17-9FF0-AA80-DF78-12C88FA5ACB5" targetRef="_d3b4b270-2fb1-403c-92f7-09fd0a3f9425" />
+<exclusiveGateway id="_d3b4b270-2fb1-403c-92f7-09fd0a3f9425" name="排他网关" default="_166AEFF9-2000-442C-8037-5D0DF220A0C6" />
+<sequenceFlow id="_166AEFF9-1FE0-471F-A682-C34502ED8D59" sourceRef="_d3b4b270-2fb1-403c-92f7-09fd0a3f9425" targetRef="_166AEF93-EF40-F13B-A9C3-E480D38F88D0" >
+<conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "165FAC17-A003-7271-6940-CC380F6027F2"}]]></conditionExpression>
+</sequenceFlow>
+<sequenceFlow id="_166AEFF9-1FB0-489F-80A9-9A62AF98A2F1" sourceRef="_d3b4b270-2fb1-403c-92f7-09fd0a3f9425" targetRef="_165FAC18-0930-5635-A482-EFF6B30FC5B5" >
+<conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "165FAC17-A001-EF22-7E5B-06CFB3F68E41"}]]></conditionExpression>
+</sequenceFlow>
+<sequenceFlow id="_166AEFF9-2000-442C-8037-5D0DF220A0C6" sourceRef="_d3b4b270-2fb1-403c-92f7-09fd0a3f9425" targetRef="_166AEF93-EF40-F13B-A9C3-E480D38F88D0" >
+</sequenceFlow>
+<sequenceFlow id="_166AEFF9-2020-4B2A-A232-1B869E6725BE" sourceRef="_165FAC18-0930-5635-A482-EFF6B30FC5B5" targetRef="endpoint" />
+<sequenceFlow id="_166AEFF9-2040-4218-B03C-BDA64CAA7AF5" sourceRef="_166AEF93-EF40-F13B-A9C3-E480D38F88D0" targetRef="endpoint" />
+<endEvent id="cancelled" name="flowancelled" />
+</process>
+</definitions>

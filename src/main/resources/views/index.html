@@ -121,6 +121,10 @@
                             <template slot-scope="scope">
                                 <el-button size="mini" @click="completeTask(scope.$index, scope.row)">办理任务</el-button>
                                 <el-button size="mini" @click="recallTask(scope.$index, scope.row)">撤回</el-button>
+                                <el-button size="mini"
+                                           @click="flowStateView(scope.$index, scope.row,dialogTableVisible = true)">状态
+                                </el-button>
+
                             </template>
                         </el-table-column>
 
@@ -144,16 +148,18 @@
                 </el-form>
                 <template>
                     <el-table :data="doneTasks" style="width: 80%">
-                        <el-table-column prop="id" label="节点任务ID" width="180"></el-table-column>
-                        <el-table-column prop="assignee" label="节点任务的办理人" width="180"></el-table-column>
-                        <el-table-column prop="name" label="节点任务名称"></el-table-column>
+                        <el-table-column prop="taskId" label="节点任务ID" width="180"></el-table-column>
+                        <el-table-column prop="taskAssignee" label="节点任务的办理人" width="180"></el-table-column>
+                        <el-table-column prop="taskName" label="节点任务名称"></el-table-column>
                         <el-table-column prop="createTime" label="节点任务的创建时间" width="180"></el-table-column>
                         <el-table-column prop="endTime" label="节点任务的结束时间" width="180"></el-table-column>
-                        <el-table-column prop="processInstanceId" label="节点流程实例ID" width="180"></el-table-column>
+                        <el-table-column prop="id" label="节点流程实例ID" width="180"></el-table-column>
                         <el-table-column label="操作">
                             <template slot-scope="scope">
-                                <el-button size="mini" @click="completeTask(scope.$index, scope.row)">撤回</el-button>
-                                <el-button size="mini" @click="completeTask(scope.$index, scope.row)">状态</el-button>
+                                <el-button size="mini" @click="alrecallTask(scope.$index, scope.row)">撤回</el-button>
+                                <el-button size="mini"
+                                           @click="flowStateView(scope.$index, scope.row,dialogTableVisible = true)">状态
+                                </el-button>
                             </template>
                         </el-table-column>
 
@@ -178,17 +184,20 @@
                 </el-form>
                 <template>
                     <el-table :data="completeTasks" style="width: 80%">
-                        <el-table-column prop="id" label="节点任务ID" width="180"></el-table-column>
+                        <el-table-column prop="taskId" label="节点任务ID" width="180"></el-table-column>
                         <el-table-column prop="taskAssignee" label="节点任务的办理人" width="180"></el-table-column>
-                        <el-table-column prop="name" label="节点任务名称"></el-table-column>
+                        <el-table-column prop="taskName" label="节点任务名称"></el-table-column>
                         <el-table-column prop="startedTime" label="节点任务的创建时间" width="180"></el-table-column>
                         <el-table-column prop="endTime" label="节点任务的结束时间" width="180"></el-table-column>
                         <el-table-column prop="status" label="流程状态" width="180"></el-table-column>
-                        <el-table-column prop="taskName" label="节点流程实例ID" width="180"></el-table-column>
+                        <el-table-column prop="id" label="节点流程实例ID" width="180"></el-table-column>
                         <el-table-column label="操作">
                             <template slot-scope="scope">
                                 <el-button size="mini" @click="completeTask(scope.$index, scope.row)">撤回</el-button>
-                                <el-button size="mini" @click="completeTask(scope.$index, scope.row)">状态</el-button>
+                                <el-button size="mini" @click="suspendTask(scope.$index, scope.row)">终止</el-button>
+                                <el-button size="mini"
+                                           @click="flowStateView(scope.$index, scope.row,dialogTableVisible = true)">状态
+                                </el-button>
                             </template>
                         </el-table-column>
 
@@ -214,17 +223,20 @@
                 <template>
 
                     <el-table :data="instanceTasks" style="width: 80%">
-                        <el-table-column prop="id" label="节点任务ID" width="180"></el-table-column>
+                        <el-table-column prop="taskId" label="节点任务ID" width="180"></el-table-column>
                         <el-table-column prop="taskAssignee" label="节点任务的办理人" width="180"></el-table-column>
-                        <el-table-column prop="name" label="节点任务名称"></el-table-column>
+                        <el-table-column prop="taskName" label="节点任务名称"></el-table-column>
                         <el-table-column prop="startedTime" label="节点任务的创建时间" width="180"></el-table-column>
                         <el-table-column prop="endTime" label="节点任务的结束时间" width="180"></el-table-column>
                         <el-table-column prop="status" label="流程状态" width="180"></el-table-column>
-                        <el-table-column prop="taskName" label="节点流程实例ID" width="180"></el-table-column>
+                        <el-table-column prop="id" label="节点流程实例ID" width="180"></el-table-column>
                         <el-table-column label="操作">
                             <template slot-scope="scope">
                                 <el-button size="mini" @click="completeTask(scope.$index, scope.row)">撤回</el-button>
-                                <el-button size="mini" @click="completeTask(scope.$index, scope.row)">状态</el-button>
+                                <el-button size="mini"
+                                           @click="flowStateView(scope.$index, scope.row,dialogTableVisible = true)">状态
+                                </el-button>
+
                             </template>
                         </el-table-column>
 
@@ -232,6 +244,22 @@
                 </template>
             </el-tab-pane>
         </el-tabs>
+        <!-- 操作记录-->
+        <el-dialog title="历史操作记录" :visible.sync="dialogTableVisible" :center="false" width="45%">
+            <el-table :data="hisTasks" :border="true" height="100%"
+                      size="mini">
+                <el-table-column property="id" label="id" align="center" width="60"></el-table-column>
+                <el-table-column property="name" label="节点名称" align="center" width="100"></el-table-column>
+                <el-table-column property="startTime" label="开始时间" align="center"
+                                 width="150"></el-table-column>
+                <el-table-column property="endTime" label="结束时间" align="center"
+                                 width="150"></el-table-column>
+                <el-table-column property="operator" label="操作人" align="center"
+                                 width="100"></el-table-column>
+                <el-table-column property="buttonName" label="操作" align="center"
+                                 width="120"></el-table-column>
+            </el-table>
+        </el-dialog>
     </template>
 
 
@@ -241,12 +269,19 @@
         el: '#app',
         data: function () {
             return {
+                dialogTableVisible: false,
                 activeName: "one",
                 tenantId: "谢文林",
                 startUser: "谢文林",
                 processList: [{
                     text: "单任务流程",
                     name: 'bpmn/singleAssignee.bpmn'
+                },{
+                    text: "条件任务流程",
+                    name: 'bpmn/conditions.bpmn'
+                },{
+                    text: "v1",
+                    name: 'bpmn/conditionsCmd.bpmn'
                 }],
                 defaultUser: [{
                     value: '谢文林',
@@ -267,8 +302,9 @@
                 flowList: [],
                 doingTasks: [],
                 doneTasks: [],
-                completeTasks:[],
-                instanceTasks:[]
+                completeTasks: [],
+                instanceTasks: [],
+                hisTasks: [],
             }
         },
         mounted: function () {
@@ -290,12 +326,13 @@
             },
             on_search: function () {
                 this.loadDoingTasks();
+                this.loadDoneTasks();
             },
             // 部署流程
             deployByResource(item, event) {
                 debugger
                 this.$http.post('process/deployByResource',
-                    {'resourceName': item.name, tenantId: this.tenantId}
+                    {'resourceName': item.name, tenantId: this.tenantId, 'name': item.text}
                     , {emulateJSON: true}).then(
                     function (res) {
                         // 处理成功的结果
@@ -324,12 +361,12 @@
             },
             // 发起流程
             startProcess(item, event) {
-                this.$http.get('process/startProcess',
-                    {
-                        processKey: item.key,
-                        tenantId: this.tenantId,
-                        userId: this.startUser
-                    }
+                var prams = {
+                    processKey: item.id,
+                    tenantId: this.tenantId,
+                    userId: this.startUser[0]
+                }
+                this.$http.post('process/startProcess', prams
                     , {emulateJSON: true}).then(
                     function (res) {
                         this.showMsg("success", "发起成功");
@@ -341,7 +378,7 @@
             loadDoingTasks() {
                 this.$http.post('process/doingTasks',
                     {
-                      userId: this.startUser==null||this.startUser==""?"谢文林":this.startUser
+                        userId: this.startUser == null || this.startUser == "" ? "谢文林" : this.startUser[0]
                     }
                     , {emulateJSON: true}).then(
                     function (res) {
@@ -369,6 +406,19 @@
                         this.showMsg("error", "处理失败");
                     });
             },
+            alrecallTask(index, row) {
+                this.$http.post('process/recallTask',
+                    {
+                        taskId: row.taskId,
+                    }
+                    , {emulateJSON: true}).then(
+                    function (res) {
+                        this.showMsg("success", "撤回成功");
+                        this.init();
+                    }, function (err) {
+                        this.showMsg("error", "撤回失败");
+                    });
+            },
             recallTask(index, row) {
                 this.$http.post('process/recallTask',
                     {
@@ -386,8 +436,8 @@
             loadDoneTasks() {
                 this.$http.post('process/getDoneTasks',
                     {
-                     userId:  this.startUser==null||this.startUser==""?"谢文林":this.startUser
-                    },{emulateJSON: true}).then(
+                        userId: this.startUser == null || this.startUser == "" ? "谢文林" : this.startUser[0]
+                    }, {emulateJSON: true}).then(
                     function (res) {
                         this.doneTasks = res.body.rows;
                         // 处理成功的结果
@@ -401,10 +451,10 @@
             startedInstances() {
                 this.$http.post('process/getInstances',
                     {
-                        userId:  this.startUser==null||this.startUser==""?"谢文林":this.startUser
-                    },{emulateJSON: true}).then(
+                        userId: this.startUser == null || this.startUser == "" ? "谢文林" : this.startUser[0]
+                    }, {emulateJSON: true}).then(
                     function (res) {
-                        this.completeTasks =res.body.rows;
+                        this.completeTasks = res.body.rows;
                         console.log(res.body)
                     }, function (err) {
                         // 处理失败的结果
@@ -413,9 +463,32 @@
             },
             // 获取实例任务
             loadGetInstances() {
-                this.$http.post('process/getInstances',{emulateJSON: true}).then(
+                this.$http.post('process/getInstances', {emulateJSON: true}).then(
                     function (res) {
                         this.instanceTasks = res.body.rows;
+                        // 处理成功的结果
+                        console.log(res.body)
+                    }, function (err) {
+                        // 处理失败的结果
+                        console.log(err)
+                    });
+            },
+            suspendTask(index, row) {
+                this.$http.post('process/suspendTask', {
+                    instanceId: row.id
+                }, {emulateJSON: true}).then(
+                    function (res) {
+                        this.showMsg("success", "终止成功");
+                    }, function (err) {
+                        this.showMsg("error", "终止失败");
+                    });
+            },
+            flowStateView(index, row) {
+                this.$http.post('process/getTaskHistory', {
+                    instanceId: row.id
+                }, {emulateJSON: true}).then(
+                    function (res) {
+                        this.hisTasks = res.body;
                         // 处理成功的结果
                         console.log(res.body)
                     }, function (err) {

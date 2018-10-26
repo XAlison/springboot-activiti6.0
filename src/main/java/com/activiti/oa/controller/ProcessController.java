@@ -3,6 +3,7 @@ package com.activiti.oa.controller;
 import com.activiti.oa.model.Definition;
 import com.activiti.oa.model.ProcessModel;
 import com.activiti.oa.model.viewmodels.InstanceViewModel;
+import com.activiti.oa.model.viewmodels.TaskHistoryViewModel;
 import com.activiti.oa.model.viewmodels.TaskViewModel;
 import com.activiti.oa.service.ProcessService;
 import com.activiti.oa.viewmodels.PagedFilterViewModel;
@@ -17,7 +18,10 @@ import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -37,8 +41,8 @@ public class ProcessController {
     private ProcessService processService;
 
     @RequestMapping("deployByResource")
-    public String deployByResource(String resourceName, String tenantId) {
-        return processService.deployByResource(resourceName, tenantId);
+    public String deployByResource(String name,String resourceName, String tenantId) {
+        return processService.deployByResource( name,resourceName, tenantId);
     }
 
     @RequestMapping("getAllFlowList")
@@ -76,7 +80,6 @@ public class ProcessController {
 
     @RequestMapping("startProcess")
     public String startProcess(String processKey, String tenantId, String userId) {
-
         Map<String, Object> variables = new HashMap<>();
         variables.put("applyUser", userId);
         variables.put("user1", userId);
@@ -95,6 +98,11 @@ public class ProcessController {
         processService.recallTask(taskId);
     }
 
+    @RequestMapping("suspendTask")
+    public ResponseEntity suspendTask(String instanceId) throws Exception {
+        processService.suspendTask(instanceId);
+        return new ResponseEntity<>("ok", HttpStatus.OK);
+    }
     // 待办任务
     @RequestMapping("doingTasks")
     public PagedListViewModel<TaskViewModel> doingTasks(String userId) throws Exception {
@@ -144,6 +152,10 @@ public class ProcessController {
         return processService.getInstances(pagedFilterViewModel);
     }
 
+    @RequestMapping("getTaskHistory")
+    private  List<TaskHistoryViewModel> getTaskHistory(String instanceId) throws Exception {
+        return processService.getTaskHistory(instanceId);
+    }
 
 
    /* @RequestMapping("doingTasks")

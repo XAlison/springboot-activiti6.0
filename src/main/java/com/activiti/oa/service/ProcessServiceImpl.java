@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.activiti.bpmn.model.FlowNode;
 import org.activiti.bpmn.model.Process;
@@ -28,6 +29,7 @@ import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricVariableInstance;
 import org.activiti.engine.impl.RepositoryServiceImpl;
+import org.activiti.engine.impl.identity.Authentication;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.runtime.Execution;
@@ -66,10 +68,14 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     @Override
-    public String deployByResource(String resourceName, String tenantId) {
+    public String deployByResource(String name,String resourceName, String tenantId) {
+        String uuid = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
         Deployment deploy = processEngine.getRepositoryService()
                 .createDeployment()
                 .addClasspathResource(resourceName)
+                .name(name)
+                .key(uuid)
+                .category(tenantId)
                 .tenantId(tenantId)
                 .deploy();
         return deploy.getId();
@@ -78,12 +84,15 @@ public class ProcessServiceImpl implements ProcessService {
 
     @Override
     public Task startProcess(String definitionId, String tenantId, Map<String, Object> variables) {
+        Authentication.setAuthenticatedUserId(variables.get("applyUser").toString());
         // 启动流程设置发起人以及节点处理人
-        ProcessInstance processInstance = processEngine.getRuntimeService().startProcessInstanceByKey(definitionId, variables);
+        ProcessInstance processInstance = processEngine.getRuntimeService().startProcessInstanceById(definitionId, variables);
         // 第一个任务节点
         Task task = processEngine.getTaskService().createTaskQuery().processInstanceId(processInstance.getProcessInstanceId()).singleResult();
+        task.setAssignee(variables.get("applyUser").toString());
         task.setTenantId(tenantId);
         task.setDescription("first Task");
+        processEngine.getTaskService().saveTask(task);
         return task;
     }
 
@@ -99,6 +108,9 @@ public class ProcessServiceImpl implements ProcessService {
 
         // 处理表单参数
         Map<String, Object> variablesTmp = new HashMap<>();
+        variables=new HashMap<>();
+        variables.put("user2","钱云飞");
+        variables.put("action","165FAC17-A001-EF22-7E5B-06CFB3F68E41");
         if (variables != null) {
             variables.forEach((key, value) -> {
                 if (!key.startsWith("fix_")) {
@@ -116,10 +128,10 @@ public class ProcessServiceImpl implements ProcessService {
         // 保存当前任务
         processEngine.getTaskService().saveTask(currentTask);
 
-        Map<String, Object> variables1 = new HashMap<>();
-        variables1.put("user2", "谢文林");
+        //Map<String, Object> variables1 = new HashMap<>();
+       // variables1.put("user2", "谢文林");
         // 执行流转
-        processEngine.getTaskService().complete(taskId, variables1);
+        processEngine.getTaskService().complete(taskId);
         // 获取下一节点并行或者分发任务
         List<Task> nextTasks = processEngine.getTaskService().createTaskQuery()
                 .processInstanceId(currentTask.getProcessInstanceId())
@@ -187,6 +199,7 @@ public class ProcessServiceImpl implements ProcessService {
         // 获取目标节点定义
         FlowNode targetNode = (FlowNode) process.getFlowElement(nextTask.get().getActivityId());
         if (targetNode != null) {
+            processEngine.getHistoryService().deleteHistoricTaskInstance(currentTask.getId());
             //删除当前运行任务
             String executionEntityId = processEngine.getManagementService().executeCommand(new DeleteTaskCmd(currentTask.getId()));
             // 流程执行到来源节点
@@ -205,7 +218,7 @@ public class ProcessServiceImpl implements ProcessService {
         String activityId = execution.getActivityId();
         // 当前活动节点
         FlowNode sourceFlowNode = (FlowNode) process.getFlowElement(activityId);
-        FlowNode targetFlowNode = (FlowNode) process.getFlowElement("endpoint");
+        FlowNode targetFlowNode = (FlowNode) process.getFlowElement("endevent1");
         //记录原活动方向
         List<SequenceFlow> oriSequenceFlows = new ArrayList<>();
         oriSequenceFlows.addAll(sourceFlowNode.getOutgoingFlows());

@@ -5,7 +5,7 @@
     <!--查询待办-->
     <select id="getDoingTasks"
             parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
-            resultType="com.activiti.oa.model.TaskViewModel">
+            resultType="com.activiti.oa.model.viewmodels.TaskViewModel">
 
         SELECT
         task.ID_ AS id,
@@ -71,7 +71,7 @@
     <!--查询已办-->
     <select id="getDoneTasks"
             parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
-            resultType="com.activiti.oa.model.InstanceViewModel">
+            resultType="com.activiti.oa.model.viewmodels.InstanceViewModel">
         SELECT
         inst.ID_ AS id,
         inst.PROC_DEF_ID_ AS processId,
@@ -95,7 +95,7 @@
         WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
         inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
         AND (task.ID_ = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
-        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} AND DELETE_REASON_ = 'completed')
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} )
         <if test="filters.processName != null">
             AND flow_definition.name LIKE '%${filters.processName}%'
         </if>
@@ -116,7 +116,7 @@
         WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
         inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
         AND (task.ID_  = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
-        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} AND DELETE_REASON_ = 'completed')
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} )
         <if test="filters.processName != null">
             AND flow_definition.name LIKE '%${filters.processName}%'
         </if>
@@ -127,7 +127,7 @@
     <!--查询实例-->
     <select id="getInstances"
             parameterType="com.activiti.oa.viewmodels.PagedFilterViewModel"
-            resultType="com.activiti.oa.model.InstanceViewModel">
+            resultType="com.activiti.oa.model.viewmodels.InstanceViewModel">
         SELECT
         inst.ID_ AS id,
         inst.PROC_DEF_ID_ AS processId,

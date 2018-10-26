@@ -34,7 +34,7 @@ public interface ProcessService {
      * @param resourceName 资源名称
      * @return 返回流程部署id
      */
-    String deployByResource(String resourceName, String tenantId);
+    String deployByResource(String name,String resourceName, String tenantId);
 
     /**
      * 通过流程id，以及流程部署xml部署生成流程
