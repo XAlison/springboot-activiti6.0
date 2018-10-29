@@ -95,7 +95,7 @@
         WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
         inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
         AND (task.ID_ = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
-        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} )
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId}  AND ACT_HI_TASKINST.END_TIME_ IS NOT NULL)
         <if test="filters.processName != null">
             AND flow_definition.name LIKE '%${filters.processName}%'
         </if>
@@ -116,7 +116,7 @@
         WHERE (flow_definition.isTest = 0 OR flow_definition.isTest IS NULL) AND
         inst.SUPER_PROCESS_INSTANCE_ID_ IS NULL
         AND (task.ID_  = (select max(task.ID_) from ACT_RU_TASK where inst.ID_ = task.PROC_INST_ID_) OR task.ID_ IS NULL)
-        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId} )
+        AND inst.ID_ IN (SELECT PROC_INST_ID_ FROM ACT_HI_TASKINST WHERE ASSIGNEE_ = #{filters.currentUserId}  AND ACT_HI_TASKINST.END_TIME_ IS NOT NULL)
         <if test="filters.processName != null">
             AND flow_definition.name LIKE '%${filters.processName}%'
         </if>
@@ -233,4 +233,14 @@
             fd.create_time DESC
    </select>
 
+    <insert id="addRunTask" parameterType="Map">
+    INSERT INTO ACT_RU_TASK (ID_, NAME_, TASK_DEF_KEY_, ASSIGNEE_, CREATE_TIME_, SUSPENSION_STATE_, REV_,EXECUTION_ID_, PROC_INST_ID_, PROC_DEF_ID_, PRIORITY_ )
+    VALUES (${TaskId}, #{TaskName}, #{ActivityId}, #{Assignee}, NOW(), 1, 2, #{EXECUTION_ID_}, #{PROC_INST_ID_}, #{PROC_DEF_ID_}, 50);
+    </insert>
+
+    <update id="updateRunTask" parameterType="Map">
+        UPDATE ACT_RU_EXECUTION SET ACT_ID_ = #{ActivityId} WHERE PROC_INST_ID_ = ${InstanceId} AND ID_ = ${EXECUTION_ID_};
+        UPDATE ACT_HI_ACTINST SET END_TIME_ = NULL ,DURATION_ = NULL WHERE ID_= #{ActinstId};
+        UPDATE ACT_HI_TASKINST SET END_TIME_ = NULL ,DURATION_ = NULL,DELETE_REASON_ = NULL WHERE ID_= #{prevTaskId};
+    </update>
 </mapper>

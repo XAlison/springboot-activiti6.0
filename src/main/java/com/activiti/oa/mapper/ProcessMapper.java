@@ -47,6 +47,14 @@ public interface ProcessMapper {
     Long getDoneTasksCount(PagedFilterViewModel filter);
 
     Long getInstancesCount(PagedFilterViewModel filter);
+    /**
+     * 动态添加流程任务
+     */
+    Long addRunTask(Map map);
 
+    /**
+     * 动态修改流程任务
+     */
+    Long updateRunTask(Map map);
 
 }

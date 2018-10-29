@@ -120,6 +120,16 @@ public interface ProcessService {
      */
     PagedListViewModel<InstanceViewModel> getInstances(PagedFilterViewModel filter);
 
+    /**
+     * 动态添加流程任务
+     */
+    Long addRunTask(Map map);
+
+    /**
+     * 动态修改流程任务
+     */
+    Long updateRunTask(Map map);
+
 }
 
 

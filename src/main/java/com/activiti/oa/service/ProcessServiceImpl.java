@@ -1,11 +1,10 @@
 package com.activiti.oa.service;
 
-import com.activiti.oa.hander.DeleteTaskCmd;
-import com.activiti.oa.hander.TaskNodeCmd;
-import com.activiti.oa.model.ProcessStateEnum;
 import com.activiti.oa.exceptions.ApplicationException;
+import com.activiti.oa.hander.DeleteTaskCmd;
 import com.activiti.oa.mapper.ProcessMapper;
 import com.activiti.oa.model.Definition;
+import com.activiti.oa.model.ProcessStateEnum;
 import com.activiti.oa.model.viewmodels.InstanceViewModel;
 import com.activiti.oa.model.viewmodels.TaskHistoryViewModel;
 import com.activiti.oa.model.viewmodels.TaskViewModel;
@@ -68,8 +67,8 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     @Override
-    public String deployByResource(String name,String resourceName, String tenantId) {
-        String uuid = UUID.randomUUID().toString().replaceAll("-","").toUpperCase();
+    public String deployByResource(String name, String resourceName, String tenantId) {
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
         Deployment deploy = processEngine.getRepositoryService()
                 .createDeployment()
                 .addClasspathResource(resourceName)
@@ -108,9 +107,9 @@ public class ProcessServiceImpl implements ProcessService {
 
         // 处理表单参数
         Map<String, Object> variablesTmp = new HashMap<>();
-        variables=new HashMap<>();
-        variables.put("user2","钱云飞");
-        variables.put("action","165FAC17-A001-EF22-7E5B-06CFB3F68E41");
+        variables = new HashMap<>();
+        variables.put("user2", "钱云飞");
+        variables.put("action", "165FAC17-A001-EF22-7E5B-06CFB3F68E41");
         if (variables != null) {
             variables.forEach((key, value) -> {
                 if (!key.startsWith("fix_")) {
@@ -129,7 +128,7 @@ public class ProcessServiceImpl implements ProcessService {
         processEngine.getTaskService().saveTask(currentTask);
 
         //Map<String, Object> variables1 = new HashMap<>();
-       // variables1.put("user2", "谢文林");
+        // variables1.put("user2", "谢文林");
         // 执行流转
         processEngine.getTaskService().complete(taskId);
         // 获取下一节点并行或者分发任务
@@ -202,10 +201,27 @@ public class ProcessServiceImpl implements ProcessService {
             processEngine.getHistoryService().deleteHistoricTaskInstance(currentTask.getId());
             //删除当前运行任务
             String executionEntityId = processEngine.getManagementService().executeCommand(new DeleteTaskCmd(currentTask.getId()));
-            // 流程执行到来源节点
-            processEngine.getManagementService().executeCommand(new TaskNodeCmd(targetNode, executionEntityId));
-        }
+            // 流程执行到来源节点  方式一
+            //processEngine.getManagementService().executeCommand(new TaskNodeCmd(targetNode, executionEntityId,nextTask.get()));
 
+            // 执行修改流程数据   方式二
+            HistoricActivityInstance activityInstance = nextTask.get();
+            Map<String, String> map = new HashMap<>();
+            map.put("InstanceId", activityInstance.getProcessInstanceId());
+            map.put("ActinstId", activityInstance.getId());
+            map.put("TaskId", activityInstance.getTaskId());
+            map.put("TaskName", activityInstance.getActivityName());
+            map.put("ActivityId", activityInstance.getActivityId());
+            map.put("Assignee", activityInstance.getAssignee());
+            map.put("CreateTime", activityInstance.getStartTime().toString());
+            map.put("prevTaskId", activityInstance.getTaskId());
+            map.put("EXECUTION_ID_", activityInstance.getExecutionId());
+            map.put("PROC_INST_ID_", activityInstance.getProcessInstanceId());
+            map.put("PROC_DEF_ID_", activityInstance.getProcessDefinitionId());
+            map.put("EXECUTION", executionEntityId);
+            processMapper.updateRunTask(map);
+            processMapper.addRunTask(map);
+        }
     }
 
     @Override
@@ -218,7 +234,7 @@ public class ProcessServiceImpl implements ProcessService {
         String activityId = execution.getActivityId();
         // 当前活动节点
         FlowNode sourceFlowNode = (FlowNode) process.getFlowElement(activityId);
-        FlowNode targetFlowNode = (FlowNode) process.getFlowElement("endevent1");
+        FlowNode targetFlowNode = (FlowNode) process.getFlowElement("cancelled");
         //记录原活动方向
         List<SequenceFlow> oriSequenceFlows = new ArrayList<>();
         oriSequenceFlows.addAll(sourceFlowNode.getOutgoingFlows());
@@ -262,7 +278,7 @@ public class ProcessServiceImpl implements ProcessService {
     @Override
     public int modifyProcessState(String instanceId, String state) throws Exception {
         Map<String, String> instanceMap = new HashMap<String, String>() {{
-            put("instanceId", instanceId);
+            put("InstanceId", instanceId);
             put("state", state);
         }};
         return processMapper.modifyProcessState(instanceMap);
@@ -325,6 +341,16 @@ public class ProcessServiceImpl implements ProcessService {
         List<InstanceViewModel> tasks = processMapper.getInstances(filter);
         Long totalCount = processMapper.getInstancesCount(filter);
         return new PagedListViewModel<>(tasks, totalCount);
+    }
+
+    @Override
+    public Long addRunTask(Map map) {
+        return processMapper.addRunTask(map);
+    }
+
+    @Override
+    public Long updateRunTask(Map map) {
+        return processMapper.updateRunTask(map);
     }
 
     @Override
